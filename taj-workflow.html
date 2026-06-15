@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude → GitHub Pages → Live Site</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f7f5f0;
+    --card: #ffffff;
+    --border: rgba(0,0,0,0.10);
+    --border-strong: rgba(0,0,0,0.18);
+    --text: #1a1a18;
+    --muted: #6b6960;
+    --subtle: #9c9a93;
+    --purple-bg: #EEEDFE;
+    --purple-text: #3C3489;
+    --purple-border: #AFA9EC;
+    --teal-bg: #E1F5EE;
+    --teal-text: #085041;
+    --teal-border: #5DCAA5;
+    --amber-bg: #FAEEDA;
+    --amber-text: #633806;
+    --amber-border: #EF9F27;
+    --code-bg: #f0ede6;
+    --mono: 'Menlo', 'Monaco', 'Consolas', monospace;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 48px 20px 80px;
+  }
+
+  .wrapper {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  .header {
+    margin-bottom: 48px;
+    text-align: center;
+  }
+  .header-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--subtle);
+    margin-bottom: 10px;
+  }
+  .header h1 {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -.02em;
+    line-height: 1.2;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+  .header p {
+    font-size: 15px;
+    color: var(--muted);
+    line-height: 1.6;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  /* Step layout */
+  .steps { display: flex; flex-direction: column; gap: 0; }
+
+  .step-row {
+    display: flex;
+    gap: 0;
+    position: relative;
+  }
+
+  .step-aside {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 48px;
+    flex-shrink: 0;
+  }
+
+  .step-num {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+  }
+  .num-purple { background: var(--purple-bg); color: var(--purple-text); border: 1px solid var(--purple-border); }
+  .num-teal   { background: var(--teal-bg);   color: var(--teal-text);   border: 1px solid var(--teal-border); }
+  .num-amber  { background: var(--amber-bg);  color: var(--amber-text);  border: 1px solid var(--amber-border); }
+
+  .step-line {
+    width: 1px;
+    background: var(--border);
+    flex: 1;
+    margin: 6px 0;
+  }
+
+  .step-body {
+    padding-bottom: 32px;
+    flex: 1;
+    padding-left: 16px;
+    padding-top: 4px;
+  }
+
+  /* Cards */
+  .card {
+    background: var(--card);
+    border: 0.5px solid var(--border-strong);
+    border-radius: 14px;
+    padding: 20px 22px;
+  }
+
+  .card-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 20px;
+  }
+  .badge-purple { background: var(--purple-bg); color: var(--purple-text); border: 0.5px solid var(--purple-border); }
+  .badge-teal   { background: var(--teal-bg);   color: var(--teal-text);   border: 0.5px solid var(--teal-border); }
+  .badge-amber  { background: var(--amber-bg);  color: var(--amber-text);  border: 0.5px solid var(--amber-border); }
+
+  .card h2 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 14px;
+    line-height: 1.3;
+  }
+
+  /* Code block */
+  .code {
+    background: var(--code-bg);
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.65;
+    color: var(--text);
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  .code .c { color: var(--subtle); }
+
+  /* Pills row */
+  .pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+  }
+  .pill {
+    background: #f0ede6;
+    border: 0.5px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* Slide preview */
+  .slide-preview {
+    display: flex;
+    border: 0.5px solid var(--border-strong);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 14px;
+    height: 90px;
+  }
+  .slide-photo {
+    width: 50%;
+    background: linear-gradient(135deg, #c49a6c 0%, #8b5e3c 60%, #5c3318 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .slide-photo span { font-size: 11px; color: rgba(255,255,255,0.55); font-weight: 500; letter-spacing: .04em; }
+  .photo-icon {
+    width: 28px; height: 28px;
+    border: 1.5px solid rgba(255,255,255,0.3);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .photo-icon svg { opacity: .5; }
+  .slide-content {
+    width: 50%;
+    background: #fafaf8;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-left: 0.5px solid var(--border);
+  }
+  .slide-tag { font-size: 9px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--subtle); }
+  .slide-h { font-size: 14px; font-weight: 600; color: var(--text); margin: 3px 0; }
+  .slide-p { font-size: 10px; color: var(--muted); line-height: 1.45; }
+
+  /* Note */
+  .note {
+    margin-top: 12px;
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .note code {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--code-bg);
+    padding: 1px 5px;
+    border-radius: 4px;
+    border: 0.5px solid var(--border);
+  }
+
+  /* DNS table */
+  .dns-table {
+    display: flex;
+    gap: 0;
+    margin-top: 14px;
+    border: 0.5px solid var(--border-strong);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .dns-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .dns-col + .dns-col {
+    border-left: 0.5px solid var(--border);
+  }
+  .dns-head {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--subtle);
+    padding: 8px 12px 6px;
+    background: var(--code-bg);
+    border-bottom: 0.5px solid var(--border);
+  }
+  .dns-val {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text);
+    padding: 10px 12px;
+  }
+
+  /* Live badge */
+  .live-wrap { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+  .live-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--teal-bg); color: var(--teal-text);
+    border: 0.5px solid var(--teal-border);
+    border-radius: 20px; padding: 5px 12px;
+    font-size: 12px; font-weight: 500;
+  }
+  .live-dot {
+    width: 7px; height: 7px; border-radius: 50%; background: #1D9E75;
+  }
+  .ttl-pill {
+    font-size: 11px; color: var(--muted);
+    background: var(--code-bg);
+    border: 0.5px solid var(--border);
+    border-radius: 20px; padding: 4px 10px;
+  }
+
+  /* Footer */
+  .footer {
+    margin-top: 48px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--subtle);
+  }
+  .footer a { color: var(--subtle); text-decoration: underline; text-underline-offset: 2px; }
+
+  @media (max-width: 480px) {
+    body { padding: 32px 14px 60px; }
+    .header h1 { font-size: 22px; }
+    .dns-val { font-size: 11px; padding: 8px 8px; }
+    .dns-head { padding: 6px 8px 5px; }
+    .code { font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <header class="header">
+    <div class="header-eyebrow">Step-by-step guide</div>
+    <h1>Build &amp; publish a site<br>with Claude + GitHub Pages</h1>
+    <p>Prompt Claude to generate HTML, push it to a GitHub repo, then point a custom subdomain at it with a CNAME record.</p>
+  </header>
+
+  <div class="steps">
+
+    <!-- Step 1 -->
+    <div class="step-row">
+      <div class="step-aside">
+        <div class="step-num num-purple">1</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-body">
+        <div class="card">
+          <div class="card-eyebrow">
+            <span class="badge badge-purple">Claude</span>
+          </div>
+          <h2>Prompt Claude to generate the HTML site</h2>
+          <div class="code"><span class="c">"</span>Create a single-page HTML slideshow website about
+the Taj Mahal with exactly 5 slides. Use a split-screen
+layout on each slide: the left half is a full-height
+photo panel with a real building photograph, and the
+right half is the content panel with text and facts.<span class="c">"</span></div>
+
+          <!-- Split-screen layout preview -->
+          <div class="slide-preview">
+            <div class="slide-photo">
+              <div class="photo-icon">
+                <svg width="14" height="14" fill="none" stroke="white" stroke-width="1.5" viewBox="0 0 24 24">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <path d="M21 15l-5-5L5 21"/>
+                </svg>
+              </div>
+              <span>Photo panel</span>
+            </div>
+            <div class="slide-content">
+              <div class="slide-tag">Slide 1 of 5</div>
+              <div class="slide-h">Taj Mahal</div>
+              <div class="slide-p">Built 1632–1653 · Agra, India<br>UNESCO World Heritage Site</div>
+            </div>
+          </div>
+
+          <div class="pills">
+            <span class="pill">⬛ Split-screen layout</span>
+            <span class="pill">🖼 Real photo panels</span>
+            <span class="pill">📄 Single HTML file</span>
+            <span class="pill">5 slides</span>
+          </div>
+          <div class="note">Claude outputs a single self-contained <code>index.html</code> file — no external build tools needed. Copy the entire response and save it as a file.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step-row">
+      <div class="step-aside">
+        <div class="step-num num-teal">2</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-body">
+        <div class="card">
+          <div class="card-eyebrow">
+            <span class="badge badge-teal">GitHub Pages</span>
+          </div>
+          <h2>Save the file to your GitHub repository</h2>
+          <div class="code"><span class="c"># Repo: github.com/palakdesai/pd-test-pages</span>
+
+<span class="c"># 1. Save Claude's output as index.html in repo root</span>
+<span class="c"># 2. Commit and push to main branch</span>
+<span class="c"># 3. Go to: Settings → Pages</span>
+<span class="c">#    Source: Deploy from branch → main → / (root)</span>
+<span class="c"># 4. Click Save</span></div>
+          <div class="pills">
+            <span class="pill">📁 pd-test-pages</span>
+            <span class="pill">⚙️ Settings → Pages</span>
+            <span class="pill">index.html in root</span>
+          </div>
+          <div class="note">
+            GitHub Pages will publish your site at <code>palakdesai.github.io/pd-test-pages</code> within 1–2 minutes of enabling it. You'll see a green tick in the Pages settings when it's live.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step-row">
+      <div class="step-aside">
+        <div class="step-num num-amber">3</div>
+      </div>
+      <div class="step-body">
+        <div class="card">
+          <div class="card-eyebrow">
+            <span class="badge badge-amber">DNS · CNAME</span>
+          </div>
+          <h2>Add a CNAME record to point your subdomain at GitHub</h2>
+
+          <div class="dns-table">
+            <div class="dns-col">
+              <div class="dns-head">Type</div>
+              <div class="dns-val">CNAME</div>
+            </div>
+            <div class="dns-col">
+              <div class="dns-head">Name / Host</div>
+              <div class="dns-val">taj</div>
+            </div>
+            <div class="dns-col">
+              <div class="dns-head">Value / Points to</div>
+              <div class="dns-val">palakdesai.github.io</div>
+            </div>
+            <div class="dns-col">
+              <div class="dns-head">TTL</div>
+              <div class="dns-val">30 min</div>
+            </div>
+          </div>
+
+          <div class="note" style="margin-top:16px">
+            <strong>Two more things to complete the connection:</strong><br><br>
+            1. Add a file named <code>CNAME</code> (no extension) to the root of your repo. Its only content should be your custom domain, e.g. <code>taj.yourdomain.com</code><br><br>
+            2. In GitHub → <strong>Settings → Pages → Custom domain</strong>, enter that same domain and click Save. GitHub will verify DNS and enable HTTPS automatically.
+          </div>
+
+          <div class="live-wrap">
+            <span class="live-badge"><span class="live-dot"></span> Live at taj.yourdomain.com</span>
+            <span class="ttl-pill">DNS propagation: up to 30 min</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /steps -->
+
+  <footer class="footer">
+    Made with <a href="https://claude.ai">Claude</a> · Hosted on <a href="https://pages.github.com">GitHub Pages</a>
+  </footer>
+
+</div>
+</body>
+</html>
