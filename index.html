@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Taj Mahal — A Monument of Eternity</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:wght@300;400;600&family=Inter:wght@300;400&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --ivory: #F7F2E8; --gold: #C9A84C; --gold-lt: #E8C96D;
+    --mist: #8BA5B0; --deep: #1A1F2E; --inlay: #2D6A8A;
+  }
+  html, body { height: 100%; overflow: hidden; background: var(--deep); font-family: 'Inter', sans-serif; color: var(--ivory); }
+
+  .deck { width: 100vw; height: 100vh; position: relative; }
+
+  .slide {
+    position: absolute; inset: 0;
+    display: grid; grid-template-columns: 1fr 1fr;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.8s ease, transform 0.8s ease;
+    transform: translateY(20px); overflow: hidden; background: var(--deep);
+  }
+  .slide.active { opacity: 1; pointer-events: all; transform: translateY(0); }
+  .slide.exit   { opacity: 0; transform: translateY(-20px); }
+
+  /* Photo panel */
+  .photo-panel { position: relative; overflow: hidden; height: 100vh; }
+  .photo-panel img {
+    width: 100%; height: 100%; object-fit: cover; object-position: center;
+    display: block; transition: transform 10s ease;
+  }
+  .slide.active .photo-panel img { transform: scale(1.06); }
+  .photo-panel::after {
+    content: ''; position: absolute; right: 0; top: 8%; bottom: 8%;
+    width: 1px; background: linear-gradient(to bottom, transparent, var(--gold), transparent);
+    opacity: 0.35; z-index: 2;
+  }
+  .photo-caption {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 2rem 1.4rem 1rem;
+    background: linear-gradient(to top, rgba(26,31,46,0.88), transparent);
+    font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: rgba(247,242,232,0.5); z-index: 3;
+  }
+
+  /* Content panel */
+  .content-panel {
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 4rem 5% 4rem 6%; overflow-y: auto; height: 100vh;
+  }
+
+  .slide-num {
+    font-size: 0.65rem; font-weight: 300; letter-spacing: 0.35em;
+    color: var(--gold); text-transform: uppercase; margin-bottom: 1.4rem;
+    display: flex; align-items: center; gap: 0.75rem;
+  }
+  .slide-num::after { content: ''; flex: 1; max-width: 40px; height: 1px; background: var(--gold); opacity: 0.45; }
+  .slide-tag { font-size: 0.62rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--mist); margin-bottom: 0.6rem; }
+  .inlay-line { width: 48px; height: 3px; background: linear-gradient(90deg, var(--inlay), var(--gold)); border-radius: 2px; margin-bottom: 1.2rem; }
+
+  h2.slide-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 3.2vw, 2.9rem); font-weight: 700; line-height: 1.12;
+    color: var(--ivory); margin-bottom: 1.2rem;
+  }
+  h2.slide-title em { font-style: italic; color: var(--gold-lt); }
+
+  .slide-body {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(0.95rem, 1.3vw, 1.15rem); font-weight: 300; line-height: 1.8;
+    color: rgba(247,242,232,0.82); margin-bottom: 1.8rem;
+  }
+
+  .facts-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .fact-chip {
+    background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 2px; padding: 0.55rem 1rem;
+  }
+  .fact-chip .val { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 700; color: var(--gold-lt); display: block; line-height: 1; }
+  .fact-chip .lbl { font-size: 0.6rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--mist); margin-top: 0.25rem; display: block; }
+
+  .arch-labels { display: flex; flex-wrap: wrap; gap: 0.5rem 1.4rem; margin-top: 0.6rem; }
+  .arch-lbl { font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mist); display: flex; align-items: center; gap: 0.4rem; }
+  .arch-lbl::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--gold); opacity: 0.65; flex-shrink: 0; }
+
+  /* Top bar */
+  .topbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    padding: 1.2rem 5vw; display: flex; justify-content: space-between; align-items: center;
+    pointer-events: none; background: linear-gradient(to bottom, rgba(26,31,46,0.55), transparent);
+  }
+  .logo { font-family: 'Playfair Display', serif; font-size: 0.85rem; letter-spacing: 0.14em; color: var(--gold); text-transform: uppercase; }
+  .logo span { color: rgba(247,242,232,0.4); font-weight: 300; }
+
+  /* Nav */
+  nav.controls { position: fixed; bottom: 2rem; right: 4vw; z-index: 100; display: flex; align-items: center; gap: 0.8rem; }
+  .nav-btn {
+    width: 42px; height: 42px; border-radius: 50%;
+    border: 1px solid rgba(201,168,76,0.4); background: rgba(26,31,46,0.7);
+    backdrop-filter: blur(8px); color: var(--gold); font-size: 1rem;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  }
+  .nav-btn:hover { background: rgba(201,168,76,0.18); border-color: var(--gold); transform: scale(1.08); }
+  .nav-btn:disabled { opacity: 0.3; cursor: default; transform: none; }
+  .dots { display: flex; gap: 6px; align-items: center; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(201,168,76,0.3); transition: background 0.3s, transform 0.3s; cursor: pointer; }
+  .dot.on { background: var(--gold); transform: scale(1.4); }
+
+  /* img error state */
+  .photo-panel img.broken { display: none; }
+  .photo-panel .img-fallback {
+    display: none; width: 100%; height: 100%;
+    background: linear-gradient(135deg, #1a2535, #2d3a4a);
+    align-items: center; justify-content: center;
+    font-size: 4rem; color: rgba(201,168,76,0.3);
+  }
+  .photo-panel img.broken ~ .img-fallback { display: flex; }
+
+  @media (max-width: 700px) {
+    .slide { grid-template-columns: 1fr; grid-template-rows: 42vh 1fr; }
+    .photo-panel { height: 42vh; }
+    .content-panel { height: auto; padding: 1.5rem 1.4rem 5rem; justify-content: flex-start; }
+    h2.slide-title { font-size: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">Taj Mahal <span>/ Agra, India</span></div>
+  <div class="logo" style="font-size:0.75rem;opacity:0.45;letter-spacing:0.06em;">ताज महल</div>
+</div>
+
+<main class="deck">
+
+  <!-- SLIDE 1: Hero — sunrise reflection -->
+  <section class="slide active" id="s1">
+    <div class="photo-panel">
+      <img src="https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=1200&q=80&fit=crop"
+           alt="Taj Mahal sunrise reflection pool"
+           onerror="this.classList.add('broken')"/>
+      <div class="img-fallback">🕌</div>
+      <div class="photo-caption">Front elevation · Agra, Uttar Pradesh · © Unsplash</div>
+    </div>
+    <div class="content-panel">
+      <div class="slide-num">01 &nbsp;/&nbsp; 05</div>
+      <div class="inlay-line"></div>
+      <div style="font-size:1.4rem;color:rgba(201,168,76,0.35);margin-bottom:0.5rem;font-family:serif;">✦ تاج محل ✦</div>
+      <h2 class="slide-title">A Monument<br/>Built from <em>Grief</em></h2>
+      <p class="slide-body">
+        The Taj Mahal is not a palace, a fortress, or a temple — it is a mausoleum raised by an emperor who refused to let death be the end of love. Commissioned in 1632 by Mughal Emperor Shah Jahan in memory of his third and beloved wife, Mumtaz Mahal, it stands today as humanity's most recognisable tribute to devotion.
+      </p>
+      <div class="facts-row">
+        <div class="fact-chip"><span class="val">1648</span><span class="lbl">Year completed</span></div>
+        <div class="fact-chip"><span class="val">22 yrs</span><span class="lbl">Construction time</span></div>
+        <div class="fact-chip"><span class="val">UNESCO</span><span class="lbl">World Heritage 1983</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 2: Architecture — wide complex view -->
+  <section class="slide" id="s2">
+    <div class="photo-panel">
+      <img src="https://images.unsplash.com/photo-1531678724157-5523af434e4b?w=1200&q=80&fit=crop"
+           alt="Taj Mahal wide complex and gardens"
+           onerror="this.classList.add('broken')"/>
+      <div class="img-fallback">🕌</div>
+      <div class="photo-caption">Charbagh garden complex · symmetrical layout · © Unsplash</div>
+    </div>
+    <div class="content-panel">
+      <div class="slide-num">02 &nbsp;/&nbsp; 05</div>
+      <div class="inlay-line"></div>
+      <div class="slide-tag">Architecture</div>
+      <h2 class="slide-title">The <em>Geometry</em><br/>of the Divine</h2>
+      <p class="slide-body">
+        The complex is a masterwork of Mughal symmetry. A 73-metre central dome — a double dome — sits atop an octagonal drum and is flanked by four 41-metre minarets that tilt slightly outward, engineered to fall away from the tomb in any earthquake. Every elevation mirrors its opposite perfectly across both axes.
+      </p>
+      <div class="arch-labels">
+        <span class="arch-lbl">Central dome — 73 m tall</span>
+        <span class="arch-lbl">Four minarets — 41 m each</span>
+        <span class="arch-lbl">Octagonal tomb chamber</span>
+        <span class="arch-lbl">Iwan arched portals</span>
+        <span class="arch-lbl">Charbagh 4-part garden</span>
+        <span class="arch-lbl">Red-sandstone mosque & Jawab</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 3: Craftsmanship — close dome/marble detail -->
+  <section class="slide" id="s3">
+    <div class="photo-panel">
+      <img src="https://images.unsplash.com/photo-1564507592333-c60657eea523?w=1200&q=80&fit=crop"
+           alt="Taj Mahal marble dome detail"
+           onerror="this.classList.add('broken')"/>
+      <div class="img-fallback">🕌</div>
+      <div class="photo-caption">Makrana marble surface · pietra dura inlay detail · © Unsplash</div>
+    </div>
+    <div class="content-panel">
+      <div class="slide-num">03 &nbsp;/&nbsp; 05</div>
+      <div class="inlay-line"></div>
+      <div class="slide-tag">Craftsmanship</div>
+      <h2 class="slide-title">Marble, Gems &<br/><em>20,000 Hands</em></h2>
+      <p class="slide-body">
+        The tomb is clad in translucent white Makrana marble from Rajasthan — a stone that shifts from rosy at dawn to brilliant white at noon to golden by moonlight. Artisans inlaid its surfaces with <em>pietra dura</em>: intricate floral and calligraphic patterns using 28 varieties of precious stones — lapis lazuli, jasper, jade, turquoise, and onyx — sourced across Asia and as far as Russia.
+      </p>
+      <div class="facts-row">
+        <div class="fact-chip"><span class="val">28</span><span class="lbl">Gem varieties inlaid</span></div>
+        <div class="fact-chip"><span class="val">1,000+</span><span class="lbl">Elephants hauled marble</span></div>
+        <div class="fact-chip"><span class="val">32 km</span><span class="lbl">Marble source — Makrana</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 4: History & Myths — gateway arch framed view -->
+  <section class="slide" id="s4">
+    <div class="photo-panel">
+      <img src="https://images.unsplash.com/photo-1545562083-c583d014b4f2?w=1200&q=80&fit=crop"
+           alt="Taj Mahal framed through gateway arch"
+           onerror="this.classList.add('broken')"/>
+      <div class="img-fallback">🕌</div>
+      <div class="photo-caption">View through the main gateway · Agra Fort perspective · © Unsplash</div>
+    </div>
+    <div class="content-panel">
+      <div class="slide-num">04 &nbsp;/&nbsp; 05</div>
+      <div class="inlay-line"></div>
+      <div class="slide-tag">History & Fun Facts</div>
+      <h2 class="slide-title">Myths, Wars &<br/><em>Strange Truths</em></h2>
+      <p class="slide-body">
+        Shah Jahan intended to build a black marble mausoleum for himself across the river — a twin in shadow — but was deposed by his own son Aurangzeb before work began. During both World Wars, the British disguised the dome with bamboo scaffolding to protect it from enemy bombers. The minarets lean outward deliberately so they'd fall away from the tomb in an earthquake. And the myth that craftsmen had their hands severed? No contemporary source supports it.
+      </p>
+      <div class="facts-row">
+        <div class="fact-chip"><span class="val">Black Twin</span><span class="lbl">Unbuilt shadow tomb</span></div>
+        <div class="fact-chip"><span class="val">WWII</span><span class="lbl">Camouflaged twice</span></div>
+        <div class="fact-chip"><span class="val">~8M</span><span class="lbl">Annual visitors today</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 5: Legacy — moonrise / dusk -->
+  <section class="slide" id="s5">
+    <div class="photo-panel">
+      <img src="https://images.unsplash.com/photo-1577125305658-dee71d4ee3c7?w=1200&q=80&fit=crop"
+           alt="Taj Mahal at dusk golden light"
+           onerror="this.classList.add('broken')"/>
+      <div class="img-fallback">🕌</div>
+      <div class="photo-caption">Yamuna River bank · dusk light · © Unsplash</div>
+    </div>
+    <div class="content-panel">
+      <div class="slide-num">05 &nbsp;/&nbsp; 05</div>
+      <div class="inlay-line"></div>
+      <div class="slide-tag">Legacy</div>
+      <h2 class="slide-title">Still Standing,<br/><em>Still Loved</em></h2>
+      <p class="slide-body">
+        Nearly four centuries after it rose above the Yamuna River, the Taj Mahal remains the planet's most visited monument to human feeling. Its white marble slowly yellows from air pollution — a challenge India actively fights with vehicle-exclusion zones and green-fuel corridors. In 2007 it was named one of the New Seven Wonders of the World. Seen at sunrise or under a full moon, it achieves the impossible: it makes stone feel like emotion.
+      </p>
+      <div class="facts-row">
+        <div class="fact-chip"><span class="val">New 7</span><span class="lbl">Wonders — 2007</span></div>
+        <div class="fact-chip"><span class="val">42 acres</span><span class="lbl">Total complex area</span></div>
+        <div class="fact-chip"><span class="val">∞</span><span class="lbl">Years of wonder</span></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<nav class="controls">
+  <button class="nav-btn" id="prev" disabled>&#8592;</button>
+  <div class="dots" id="dots"></div>
+  <button class="nav-btn" id="next">&#8594;</button>
+</nav>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const dotsEl = document.getElementById('dots');
+  const prevBtn = document.getElementById('prev');
+  const nextBtn = document.getElementById('next');
+  let cur = 0, busy = false;
+
+  slides.forEach((_, i) => {
+    const d = document.createElement('button');
+    d.className = 'dot' + (i === 0 ? ' on' : '');
+    d.setAttribute('aria-label', 'Slide ' + (i+1));
+    d.addEventListener('click', () => go(i));
+    dotsEl.appendChild(d);
+  });
+
+  function go(idx) {
+    if (busy || idx === cur) return;
+    busy = true;
+    const prevIdx = cur;
+    cur = idx;
+
+    // fade out old, bring in new
+    slides[prevIdx].classList.add('exit');
+    slides[cur].classList.add('active');
+
+    // after transition, clean up old slide
+    setTimeout(() => {
+      slides[prevIdx].classList.remove('active', 'exit');
+      busy = false;
+    }, 850);
+
+    dotsEl.querySelectorAll('.dot').forEach((d,i) => d.classList.toggle('on', i === cur));
+    prevBtn.disabled = cur === 0;
+    nextBtn.disabled = cur === slides.length - 1;
+  }
+
+  prevBtn.addEventListener('click', () => go(cur - 1));
+  nextBtn.addEventListener('click', () => go(cur + 1));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') go(Math.min(cur+1, slides.length-1));
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   go(Math.max(cur-1, 0));
+  });
+  let tx = 0;
+  document.addEventListener('touchstart', e => tx = e.touches[0].clientX, {passive:true});
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 50) go(dx < 0 ? Math.min(cur+1, slides.length-1) : Math.max(cur-1, 0));
+  }, {passive:true});
+</script>
+</body>
+</html>
